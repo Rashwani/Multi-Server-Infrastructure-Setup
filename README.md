@@ -1,4 +1,3 @@
-
 # Building a Multi-Server Home Lab on AWS with Advanced Network Segmentation
 
 In this project I built a multi-server infrastructure on AWS that replicates a real enterprise network. I deployed 5 EC2 instances across 4 network segments (subnets), each with a dedicated role, all connected inside a private VPC with layered security using both Security Groups and Network ACLs. A Bastion Host acts as the single secure entry point to the entire environment.
@@ -16,10 +15,10 @@ In this project I built a multi-server infrastructure on AWS that replicates a r
 | Database Server | Ubuntu 22.04 — MySQL database |
 | Network | VPC with 4 subnets, NAT Gateway, NACLs, per-subnet route tables |
 
-<img width="1408" height="768" alt="Gemini_Generated_Image_skjckmskjckmskjc" src="https://github.com/user-attachments/assets/5d40cbe6-acab-4bb6-b579-77263e6b6ebb" />
-```
+<img width="1408" height="768" alt="Gemini_Generated_Image_skjckmskjckmskjc" src="https://github.com/user-attachments/assets/808cc198-99aa-49f4-8480-fcc52497388b" />
 
-```
+
+
 
 ---
 
@@ -27,7 +26,7 @@ In this project I built a multi-server infrastructure on AWS that replicates a r
 
 ### Step 1 — Created the VPC and Subnets
 
-I started by building the network before launching any machines. I created a VPC named `HomeLabVPC` with a CIDR block of `10.0.0.0/16`, then created four subnets to segment the network by role:
+I started by building the network before launching any machines. I created a VPC named `Multi-Server-vpc` with a CIDR block of `10.0.0.0/16`, then created four subnets to segment the network by role:
 
 | Subnet | CIDR | Purpose |
 | --- | --- | --- |
@@ -35,14 +34,19 @@ I started by building the network before launching any machines. I created a VPC
 | DMZSubnet | 10.0.2.0/24 | Semi-public services (Web, Email) |
 | AppSubnet | 10.0.3.0/24 | Internal services (DNS) |
 | DataSubnet | 10.0.4.0/24 | Sensitive data storage (Database) |
+<img width="1613" height="318" alt="image" src="https://github.com/user-attachments/assets/8d6e2bd9-aa3c-40c7-99c5-85461b5b3554" />
 
-I then created an Internet Gateway named `HomeLabIGW` and attached it to the VPC so the public subnet could reach the internet.
+
+I then created an Internet Gateway named `Multi-Server-GW` and attached it to the VPC so the public subnet could reach the internet.
+<img width="1607" height="190" alt="image" src="https://github.com/user-attachments/assets/5ec053a1-ee6a-4dca-a18f-9f3d38e2ee53" />
 
 ---
 
 ### Step 2 — Set Up NAT Gateway and Route Tables
 
-I created a NAT Gateway named `HomeLabNAT` inside the PublicSubnet so the private servers could reach the internet for updates (e.g., `apt update`) without being directly accessible from the outside. I allocated an Elastic IP and assigned it to the NAT Gateway.
+I created a NAT Gateway named `Multi-Server-NAT` inside the PublicSubnet so the private servers could reach the internet for updates (e.g., `apt update`) without being directly accessible from the outside. I allocated an Elastic IP and assigned it to the NAT Gateway.
+<img width="1605" height="191" alt="image" src="https://github.com/user-attachments/assets/36746c4d-7e4d-428e-921a-0ddf0e2103e0" />
+
 
 I then created four separate route tables — one per subnet — to control traffic flow:
 
@@ -50,6 +54,8 @@ I then created four separate route tables — one per subnet — to control traf
 - **DMZRT** → default route points to the NAT Gateway
 - **AppRT** → default route points to the NAT Gateway
 - **DataRT** → default route points to the NAT Gateway
+<img width="1597" height="322" alt="image" src="https://github.com/user-attachments/assets/83458975-76d7-495f-a5a3-6c9794b91819" />
+
 
 Each route table was associated with its respective subnet.
 
@@ -64,6 +70,7 @@ I created a Security Group for each server role to act as instance-level firewal
 - **SG-Email** — SMTP from anywhere, IMAP from VPC, SSH from SG-Bastion only
 - **SG-DNS** — DNS (UDP/TCP 53) from the entire VPC, SSH from SG-Bastion only
 - **SG-DB** — MySQL (port 3306) from DMZ subnet only, SSH from SG-Bastion only
+<img width="1597" height="382" alt="image" src="https://github.com/user-attachments/assets/3e522e83-40b0-4d1a-9355-bc44aca95b41" />
 
 ---
 
@@ -76,6 +83,7 @@ I created three custom NACLs:
 - **NACL-DMZ** — Allows HTTP, HTTPS, SMTP, and SSH from the public subnet inbound
 - **NACL-App** — Allows DNS (UDP/TCP 53) from the VPC and SSH from the public subnet inbound
 - **NACL-Data** — Allows MySQL from the DMZ subnet and SSH from the public subnet inbound
+<img width="1611" height="347" alt="image" src="https://github.com/user-attachments/assets/66538481-f248-4fe7-acbf-d20930094863" />
 
 Each NACL included ephemeral port rules (1024–65535) for return traffic since NACLs are stateless.
 
