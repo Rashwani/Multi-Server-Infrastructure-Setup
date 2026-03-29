@@ -153,10 +153,9 @@ I edited `/etc/bind/named.conf.options` and added forwarders, query restrictions
 forwarders { 8.8.8.8; 8.8.4.4; };
 allow-query { 10.0.0.0/16; localhost; };
 recursion yes;
-
+```
 <img width="913" height="701" alt="image" src="https://github.com/user-attachments/assets/5cb77fba-7503-472e-ac7f-54f9a2b754e5" />
 
-```
 
 > **Troubleshooting: BIND failed to start — missing semicolons.** My first attempt to restart BIND failed. Running `sudo named-checkconf` showed `missing ';' before 'allow-query'`. The issue was that I forgot the trailing semicolon after the closing brace on the `forwarders` line. Every block in BIND config needs `};` not just `}`.
 <img width="923" height="693" alt="image" src="https://github.com/user-attachments/assets/36491e56-5ba6-47b2-914e-ac051447252e" />
