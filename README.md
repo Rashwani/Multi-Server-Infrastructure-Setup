@@ -44,7 +44,7 @@ I then created an Internet Gateway named `Multi-Server-GW` and attached it to th
 
 ### Step 2 — Set Up NAT Gateway and Route Tables
 
-I created a NAT Gateway named `Multi-Server-NAT` inside the PublicSubnet so the private servers could reach the internet for updates (e.g., `apt update`) without being directly accessible from the outside. I allocated an Elastic IP and assigned it to the NAT Gateway.
+I created a NAT Gateway named `Multi-Server-NAT` inside the PublicSubnet so the private servers could reach the internet for updates without being directly accessible from the outside. I allocated an Elastic IP and assigned it to the NAT Gateway.
 <img width="1605" height="191" alt="image" src="https://github.com/user-attachments/assets/36746c4d-7e4d-428e-921a-0ddf0e2103e0" />
 
 
