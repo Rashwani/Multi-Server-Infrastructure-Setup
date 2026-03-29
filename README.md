@@ -88,6 +88,9 @@ I created three custom NACLs:
 Each NACL included ephemeral port rules (1024–65535) for return traffic since NACLs are stateless.
 
 > **Troubleshooting: NACLs are stateless — this tripped me up multiple times.** The original NACL rules only allowed TCP ephemeral ports, but DNS uses UDP. This caused DNS queries to time out because UDP return traffic was being silently dropped. I had to add Custom UDP rules for ports 1024–65535 on both the App and DMZ subnet NACLs.
+<img width="1585" height="750" alt="image" src="https://github.com/user-attachments/assets/acfd2d66-7af8-44e3-8ab6-da5d105717c4" />
+<img width="1597" height="751" alt="image" src="https://github.com/user-attachments/assets/4dad81f9-2ebd-4a07-886a-a24ae2fab1ae" />
+
 
 ---
 
@@ -100,8 +103,11 @@ I launched all 5 servers through EC2, assigning each to its designated subnet an
 - Email Server → 10.0.2.14 (DMZSubnet)
 - DNS Server → 10.0.3.11 (AppSubnet)
 - DB Server → 10.0.4.13 (DataSubnet)
+<img width="1602" height="373" alt="image" src="https://github.com/user-attachments/assets/286e7294-6161-485c-a299-d3fbb07ad790" />
+
 
 After launching the Bastion Host, I allocated an Elastic IP and associated it so I'd always have a consistent public address to SSH into.
+<img width="1583" height="752" alt="image" src="https://github.com/user-attachments/assets/e78e25d7-7d18-4c4d-8636-74976f4976f6" />
 
 ---
 
@@ -147,15 +153,21 @@ I edited `/etc/bind/named.conf.options` and added forwarders, query restrictions
 forwarders { 8.8.8.8; 8.8.4.4; };
 allow-query { 10.0.0.0/16; localhost; };
 recursion yes;
+
+<img width="913" height="701" alt="image" src="https://github.com/user-attachments/assets/5cb77fba-7503-472e-ac7f-54f9a2b754e5" />
+
 ```
 
 > **Troubleshooting: BIND failed to start — missing semicolons.** My first attempt to restart BIND failed. Running `sudo named-checkconf` showed `missing ';' before 'allow-query'`. The issue was that I forgot the trailing semicolon after the closing brace on the `forwarders` line. Every block in BIND config needs `};` not just `}`.
+<img width="923" height="693" alt="image" src="https://github.com/user-attachments/assets/36491e56-5ba6-47b2-914e-ac051447252e" />
 
 > **Troubleshooting: `systemctl enable bind9` refused.** The error said `Refusing to operate on alias name`. The actual service name on Ubuntu is `named`, not `bind9`. I used `sudo systemctl enable named` instead.
 
 > **Troubleshooting: BIND couldn't resolve — IPv6 network unreachable.** After restarting, `systemctl status named` showed `network unreachable resolving 'google.com'` on IPv6 addresses, and the resolver priming query timed out. The VPC doesn't support IPv6, so BIND was trying to reach root servers over a protocol that wasn't available. I fixed this by adding `listen-on-v6 { none; };` to the BIND config.
+<img width="823" height="176" alt="image" src="https://github.com/user-attachments/assets/8828927b-14bf-4d42-80d9-01bef09063f3" />
 
 > **Troubleshooting: Typo — "non" instead of "none".** After saving the config, `named-checkconf` returned `undefined ACL 'non'`. I had written `listen-on-v6 { non; };` instead of `listen-on-v6 { none; };`. A one-letter typo that took a minute to spot.
+<img width="830" height="172" alt="image" src="https://github.com/user-attachments/assets/6a29a7cb-402b-4c4e-bc39-850499ee4909" />
 
 > **Troubleshooting: DNS still timing out even after IPv6 fix.** Running `dig @8.8.8.8 google.com` from the DNS Server itself timed out. The problem was the App Subnet NACL — it only had TCP ephemeral ports allowed inbound, but DNS responses come back on UDP. Adding a Custom UDP rule for ports 1024–65535 on NACL-App fixed it.
 
@@ -197,6 +209,7 @@ FLUSH PRIVILEGES;
 ```
 
 > **Troubleshooting: Web Server couldn't connect to MySQL.** From the Web Server, `mysql -h 10.0.4.13 -u labuser -p homelab_db` returned `Can't connect to MySQL server on '10.0.4.13:3306' (111)`. The issue was that MySQL was bound to `127.0.0.1` (localhost only), rejecting all remote connections. I edited `/etc/mysql/mysql.conf.d/mysqld.cnf`, changed `bind-address` from `127.0.0.1` to `0.0.0.0`, and restarted MySQL with `sudo systemctl restart mysql`.
+<img width="902" height="697" alt="image" src="https://github.com/user-attachments/assets/8dc4237b-87d7-4ad3-8de6-1e4bf56eaf8e" />
 
 > **Note:** I also had to install the MySQL client on the Web Server first since it wasn't included by default: `sudo apt install -y mysql-client-core-8.0`
 
@@ -224,6 +237,7 @@ I tested by sending a local email and verifying delivery:
 echo 'Test email from HomeLabVM' | mail -s 'Test' root@homelab.local
 sudo cat /var/mail/root
 ```
+<img width="926" height="166" alt="image" src="https://github.com/user-attachments/assets/ebdb04d7-3976-482a-bd03-998468674188" />
 
 ---
 
@@ -233,15 +247,28 @@ From the Bastion Host, I verified that all servers were reachable:
 
 ```bash
 ping -c 3 10.0.2.12   # Web Server (DMZ)
+<img width="791" height="261" alt="Web Server (DMZ)" src="https://github.com/user-attachments/assets/b0e28324-49ee-42c7-8941-07c89e49155b" />
+
 ping -c 3 10.0.2.14   # Email Server (DMZ)
+<img width="827" height="165" alt="Email Server (DMZ)" src="https://github.com/user-attachments/assets/6ce30e8b-e2fd-4c9d-98e7-9dd2bbc95b7f" />
+
 ping -c 3 10.0.3.11   # DNS Server (App Tier)
+<img width="803" height="164" alt="DNS Server (App Tier)" src="https://github.com/user-attachments/assets/12f590c1-df63-4b5d-ad51-2994b723e02e" />
+
 ping -c 3 10.0.4.13   # DB Server (Data Tier)
+<img width="782" height="170" alt="DB Server (Data Tier)" src="https://github.com/user-attachments/assets/eacdfe4a-8ec2-4bf6-aed9-2f2d71c7327d" />
+
 ```
 
 I also tested cross-subnet service connectivity:
 - DNS resolution from the Web Server: `nslookup google.com 10.0.3.11` ✓
+- <img width="737" height="695" alt="image" src="https://github.com/user-attachments/assets/32dd3650-d9b3-43f5-b390-d774a30feb0a" />
+
 - MySQL connection from the Web Server: `mysql -h 10.0.4.13 -u labuser -p homelab_db` ✓
+- <img width="913" height="378" alt="image" src="https://github.com/user-attachments/assets/e7695d73-e253-4aac-9b19-2e08f7e3fbce" />
+
 - HTTP from the DB Server: `curl http://10.0.2.12` ✓
+<img width="925" height="392" alt="image" src="https://github.com/user-attachments/assets/4ae8938a-30d7-471e-ae20-7459e0d500b1" />
 
 ---
 
@@ -250,7 +277,11 @@ I also tested cross-subnet service connectivity:
 I confirmed that unauthorized cross-subnet traffic was properly blocked by the NACLs:
 
 - From DB Server → Email Server: `curl http://10.0.2.14` — timed out ✓
+- <img width="1087" height="92" alt="From DB Server, try to reach Email Server directly (should fail)" src="https://github.com/user-attachments/assets/8a495e53-4597-4b6b-8130-492e8a098b07" />
+
 - From DNS Server → MySQL: `mysql -h 10.0.4.13 -u labuser -p` — refused ✓
+- <img width="846" height="86" alt="From DNS Server, try to connect to MySQL (should fail)" src="https://github.com/user-attachments/assets/fce11b0b-ef82-4b93-b063-aae7d0348d23" />
+
 
 This proves the segmentation is working. Even if the DMZ were compromised, the attacker would need to bypass the Data Tier NACL to reach the database.
 
