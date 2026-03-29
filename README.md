@@ -1,4 +1,4 @@
-<img width="1408" height="768" alt="Gemini_Generated_Image_skjckmskjckmskjc" src="https://github.com/user-attachments/assets/e9af0b3b-64e7-4c01-a951-f4d50023e275" /># Multi-Server-Infrastructure-Setup
+
 # Building a Multi-Server Home Lab on AWS with Advanced Network Segmentation
 
 In this project I built a multi-server infrastructure on AWS that replicates a real enterprise network. I deployed 5 EC2 instances across 4 network segments (subnets), each with a dedicated role, all connected inside a private VPC with layered security using both Security Groups and Network ACLs. A Bastion Host acts as the single secure entry point to the entire environment.
@@ -16,7 +16,9 @@ In this project I built a multi-server infrastructure on AWS that replicates a r
 | Database Server | Ubuntu 22.04 — MySQL database |
 | Network | VPC with 4 subnets, NAT Gateway, NACLs, per-subnet route tables |
 
+<img width="1408" height="768" alt="Gemini_Generated_Image_skjckmskjckmskjc" src="https://github.com/user-attachments/assets/5d40cbe6-acab-4bb6-b579-77263e6b6ebb" />
 ```
+
 ```
 
 ---
