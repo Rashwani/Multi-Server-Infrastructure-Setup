@@ -157,15 +157,19 @@ recursion yes;
 <img width="913" height="701" alt="image" src="https://github.com/user-attachments/assets/5cb77fba-7503-472e-ac7f-54f9a2b754e5" />
 
 
+
 > **Troubleshooting: BIND failed to start — missing semicolons.** My first attempt to restart BIND failed. Running `sudo named-checkconf` showed `missing ';' before 'allow-query'`. The issue was that I forgot the trailing semicolon after the closing brace on the `forwarders` line. Every block in BIND config needs `};` not just `}`.
+
 <img width="923" height="693" alt="image" src="https://github.com/user-attachments/assets/36491e56-5ba6-47b2-914e-ac051447252e" />
 
 > **Troubleshooting: `systemctl enable bind9` refused.** The error said `Refusing to operate on alias name`. The actual service name on Ubuntu is `named`, not `bind9`. I used `sudo systemctl enable named` instead.
 
 > **Troubleshooting: BIND couldn't resolve — IPv6 network unreachable.** After restarting, `systemctl status named` showed `network unreachable resolving 'google.com'` on IPv6 addresses, and the resolver priming query timed out. The VPC doesn't support IPv6, so BIND was trying to reach root servers over a protocol that wasn't available. I fixed this by adding `listen-on-v6 { none; };` to the BIND config.
+
 <img width="823" height="176" alt="image" src="https://github.com/user-attachments/assets/8828927b-14bf-4d42-80d9-01bef09063f3" />
 
 > **Troubleshooting: Typo — "non" instead of "none".** After saving the config, `named-checkconf` returned `undefined ACL 'non'`. I had written `listen-on-v6 { non; };` instead of `listen-on-v6 { none; };`. A one-letter typo that took a minute to spot.
+
 <img width="830" height="172" alt="image" src="https://github.com/user-attachments/assets/6a29a7cb-402b-4c4e-bc39-850499ee4909" />
 
 > **Troubleshooting: DNS still timing out even after IPv6 fix.** Running `dig @8.8.8.8 google.com` from the DNS Server itself timed out. The problem was the App Subnet NACL — it only had TCP ephemeral ports allowed inbound, but DNS responses come back on UDP. Adding a Custom UDP rule for ports 1024–65535 on NACL-App fixed it.
@@ -208,6 +212,7 @@ FLUSH PRIVILEGES;
 ```
 
 > **Troubleshooting: Web Server couldn't connect to MySQL.** From the Web Server, `mysql -h 10.0.4.13 -u labuser -p homelab_db` returned `Can't connect to MySQL server on '10.0.4.13:3306' (111)`. The issue was that MySQL was bound to `127.0.0.1` (localhost only), rejecting all remote connections. I edited `/etc/mysql/mysql.conf.d/mysqld.cnf`, changed `bind-address` from `127.0.0.1` to `0.0.0.0`, and restarted MySQL with `sudo systemctl restart mysql`.
+
 <img width="902" height="697" alt="image" src="https://github.com/user-attachments/assets/8dc4237b-87d7-4ad3-8de6-1e4bf56eaf8e" />
 
 > **Note:** I also had to install the MySQL client on the Web Server first since it wasn't included by default: `sudo apt install -y mysql-client-core-8.0`
